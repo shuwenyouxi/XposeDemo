@@ -8,6 +8,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
 import kotlin.math.abs
 
 /**
+ * 修改定位
  * Created by Shuwen Dai on 2021/2/23
  */
 class BrokerChangeGisHook : IXposedHookLoadPackage {
@@ -44,7 +45,7 @@ class BrokerChangeGisHook : IXposedHookLoadPackage {
                 if (dstLatOffset == 0.0) {
                     dstLatOffset = dstLatitude - originLat
                 }
-//                it.result = originLat + dstLatOffset
+                it.result = originLat + dstLatOffset
                 logD("getLatitude ${it.result}")
             }
         }

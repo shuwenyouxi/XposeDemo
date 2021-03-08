@@ -4,8 +4,19 @@ buildscript {
         kotlin_version = '1.4.21'
     }
     repositories {
-        google().url = 'https://maven.aliyun.com/repository/google'
-        jcenter().url = 'https://maven.aliyun.com/repository/jcenter'
+//        google()
+//        jcenter()
+//        maven {
+//            url = 'https://maven.aliyun.com/repository/google'
+//        }
+//        maven {
+//            url = 'https://maven.aliyun.com/repository/jcenter'
+//        }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'http://maven.corp.anjuke.com/nexus/content/groups/android/' }
+
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.1.0"
@@ -18,8 +29,18 @@ buildscript {
 
 allprojects {
     repositories {
-        google().url = 'https://maven.aliyun.com/repository/google'
-        jcenter().url = 'https://maven.aliyun.com/repository/jcenter'
+//        google()
+//        jcenter()
+//        maven {
+//            url = 'https://maven.aliyun.com/repository/google'
+//        }
+//        maven {
+//            url = 'https://maven.aliyun.com/repository/jcenter'
+//        }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'http://maven.corp.anjuke.com/nexus/content/groups/android/' }
     }
 }
 
