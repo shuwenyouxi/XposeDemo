@@ -2,8 +2,6 @@ package com.dsw.xposeddemo.hook
 
 import com.dsw.xposeddemo.*
 import com.dsw.xposeddemo.utils.IOUtils
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -16,29 +14,15 @@ class PrintOkHttpHook : BaseHook() {
 
     override var dstPkgName = "com.anjuke.android.newbroker"
 
-    private var okHttpClientCls: Class<*>? = null
-    private var okHttpBuilderCls: Class<*>? = null
-    private var okHttpInterceptorCls: Class<*>? = null
-
     private val UTF8 = Charset.forName("UTF-8")
 
     override fun enter() {
-        okHttpClientCls ?: run {
-            okHttpClientCls = XposedHelpers.findClass("okhttp3.OkHttpClient", clsLoader)
-        }
 
-        okHttpBuilderCls ?: run {
-            okHttpBuilderCls = XposedHelpers.findClass("okhttp3.OkHttpClient\$Builder", clsLoader)
-        }
+        hookFun("okhttp3.internal.http.CallServerInterceptor", clsLoader, "intercept", "okhttp3.Interceptor.Chain", object: MethodHookCallback() {
+            override fun before(param: MethodHookParam) {
+            }
 
-        okHttpInterceptorCls ?: run {
-            okHttpInterceptorCls = XposedHelpers.findClass("okhttp3.Interceptor", clsLoader)
-        }
-        val callInterceptor = XposedHelpers.findClass("okhttp3.internal.http.CallServerInterceptor", clsLoader)
-        XposedBridge.hookAllMethods(callInterceptor, "intercept", object : XC_MethodHook() {
-
-            override fun afterHookedMethod(param: MethodHookParam) {
-                super.afterHookedMethod(param)
+            override fun after(param: MethodHookParam) {
                 //request
                 val copyRequest = param.args?.get(0)?.call("request")?.call("newBuilder")?.call("build")
                 val headers = copyRequest?.call("headers")
@@ -66,12 +50,12 @@ class PrintOkHttpHook : BaseHook() {
 
                 val contentType = copyResponseBody?.call("contentType")
 //                if (isPlaintext(contentType)) {
-                    val bytes = IOUtils.toByteArray((copyResponseBody?.call("byteStream")) as InputStream)
-                    val body = String(bytes, getCharset(contentType))
-                    logV("contentType = ${contentType.safeToString()}}")
-                    logV("responseBody = $body}")
-                    val responseBody = XposedHelpers.callStaticMethod("okhttp3.ResponseBody".toClass(clsLoader), "create", contentType, bytes)
-                    param.result = param.result?.call("newBuilder")?.call("body", responseBody)?.call("build")
+                val bytes = IOUtils.toByteArray((copyResponseBody?.call("byteStream")) as InputStream)
+                val body = String(bytes, getCharset(contentType))
+                logV("contentType = ${contentType.safeToString()}}")
+                logV("responseBody = $body}")
+                val responseBody = XposedHelpers.callStaticMethod("okhttp3.ResponseBody".toClass(clsLoader), "create", contentType, bytes)
+                param.result = param.result?.call("newBuilder")?.call("body", responseBody)?.call("build")
 //                } else {
 //                    logV("\tbody: maybe [binary body], omitted!");
 //                }
