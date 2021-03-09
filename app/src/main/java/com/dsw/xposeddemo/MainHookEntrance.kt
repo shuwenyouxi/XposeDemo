@@ -1,6 +1,7 @@
 package com.dsw.xposeddemo
 
-import com.dsw.xposeddemo.hook.BrokerModifyNetworkRequestHook
+import com.dsw.xposeddemo.hook.ChangeGisHook
+import com.dsw.xposeddemo.hook.ChangeHybridUrlHook
 import com.dsw.xposeddemo.hook.PrintOkHttpHook
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage
@@ -10,10 +11,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
  */
 class MainHookEntrance : IXposedHookLoadPackage {
     private val hookList = mutableListOf<IXposedHookLoadPackage>().apply {
-//        add(AjkChangeWebViewHook())
-//        add(BrokerChangeGisHook())
+//        add(ChangeHybridUrlHook())
+//        add(ChangeGisHook())
         add(PrintOkHttpHook())
-//        add(BrokerModifyNetworkRequestHook())
     }
 
     @Throws(Throwable::class)

@@ -2,9 +2,6 @@ package com.dsw.xposeddemo.hook
 
 import com.dsw.xposeddemo.*
 import com.dsw.xposeddemo.utils.IOUtils
-import com.dsw.xposeddemo.utils.call
-import com.dsw.xposeddemo.utils.newInstance
-import com.dsw.xposeddemo.utils.toClass
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -62,20 +59,22 @@ class PrintOkHttpHook : BaseHook() {
                 }
                 logD("================================ Response ================================")
                 logV("response = ${param.result.safeToString()}")
-//                copyResponseBody?.call<String?>("string")?.also {
+
+//                copyResponseBody?.call("string")?.also {
 //                    logV("responseBody = $it}")
 //                }
 
                 val contentType = copyResponseBody?.call("contentType")
-                if (isPlaintext(contentType)) {
+//                if (isPlaintext(contentType)) {
                     val bytes = IOUtils.toByteArray((copyResponseBody?.call("byteStream")) as InputStream)
                     val body = String(bytes, getCharset(contentType))
+                    logV("contentType = ${contentType.safeToString()}}")
                     logV("responseBody = $body}")
                     val responseBody = XposedHelpers.callStaticMethod("okhttp3.ResponseBody".toClass(clsLoader), "create", contentType, bytes)
                     param.result = param.result?.call("newBuilder")?.call("body", responseBody)?.call("build")
-                } else {
-                    logV("\tbody: maybe [binary body], omitted!");
-                }
+//                } else {
+//                    logV("\tbody: maybe [binary body], omitted!");
+//                }
                 logI("================================ End ================================")
             }
         })

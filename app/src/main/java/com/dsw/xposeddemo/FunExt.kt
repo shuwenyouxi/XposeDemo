@@ -35,127 +35,15 @@ fun logE(t: Throwable) {
 
 
 @JvmOverloads
-fun hookFun(clsName: String, clsLoader: ClassLoader, funName: String, args: Array<Any>? = null, after: (params: XC_MethodHook.MethodHookParam) -> Unit) {
-    when (args) {
-        null -> {
-            XposedHelpers.findAndHookMethod(clsName, clsLoader, funName, object : XC_MethodHook() {
-                @Throws(Throwable::class)
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    super.beforeHookedMethod(param)
-                }
-
-                @Throws(Throwable::class)
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    super.afterHookedMethod(param)
-                    after.invoke(param)
-                }
-            })
-        }
-        else -> {
-            XposedHelpers.findAndHookMethod(clsName, clsLoader, funName, *args, object : XC_MethodHook() {
-                @Throws(Throwable::class)
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    super.beforeHookedMethod(param)
-                }
-
-                @Throws(Throwable::class)
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    super.afterHookedMethod(param)
-                    after.invoke(param)
-                }
-            })
-        }
-    }
+fun hookFun(clsName: String, clsLoader: ClassLoader, funName: String, vararg args: Any) {
+    XposedHelpers.findAndHookMethod(clsName, clsLoader, funName, *args)
 }
 
 @JvmOverloads
-fun hookFun(clazz: Class<*>, funName: String, args: Array<Any>? = null, after: (params: XC_MethodHook.MethodHookParam) -> Unit) {
-    when (args) {
-        null -> {
-            XposedHelpers.findAndHookMethod(clazz, funName, object : XC_MethodHook() {
-                @Throws(Throwable::class)
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    super.beforeHookedMethod(param)
-                }
-
-                @Throws(Throwable::class)
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    super.afterHookedMethod(param)
-                    after.invoke(param)
-                }
-            })
-        }
-        else -> {
-            XposedHelpers.findAndHookMethod(clazz, funName, *args, object : XC_MethodHook() {
-                @Throws(Throwable::class)
-                override fun beforeHookedMethod(param: MethodHookParam) {
-                    super.beforeHookedMethod(param)
-                }
-
-                @Throws(Throwable::class)
-                override fun afterHookedMethod(param: MethodHookParam) {
-                    super.afterHookedMethod(param)
-                    after.invoke(param)
-                }
-            })
-        }
-    }
+fun hookFun(cls: Class<*>, funName: String, vararg args: Any) {
+    XposedHelpers.findAndHookMethod(cls, funName, *args)
 }
 
-/**
- * 加壳的apk需要用这个拿到壳的classLoader
- */
-fun considerFindRealClassLoader(pkgClassLoader: ClassLoader, callback: (realClsLoader: ClassLoader) -> Unit) {
-//        //360加固
-//        XposedHelpers.findAndHookMethod("com.qihoo.util.StubAppxxxxxxxx", pkgClassLoader, "getNewAppInstance", Context::class.java, object : XC_MethodHook() {
-//            @Throws(Throwable::class)
-//            override fun afterHookedMethod(param: MethodHookParam?) {
-//                logD("发现壳啦")
-//                super.afterHookedMethod(param)
-//            }
-//        })
-
-//        //百度加固
-//        XposedHelpers.findAndHookMethod("com.baidu.protect.StubApplication", pkgClassLoader, "onCreate", object:  XC_MethodHook() {
-//            @Throws(Throwable::class)
-//            override fun afterHookedMethod(param: MethodHookParam?) {
-//                logD("发现壳啦")
-//                super.afterHookedMethod(param)
-//            }
-//        })
-
-//        //腾讯乐固
-//        XposedHelpers.findAndHookMethod("com.tencent.StubShell.TxAppEntry", pkgClassLoader, "attachBaseContext", object : XC_MethodHook() {
-//            @Throws(Throwable::class)
-//            override fun afterHookedMethod(param: MethodHookParam?) {
-//                super.afterHookedMethod(param)
-//                logD("发现壳啦")
-//            }
-//        })
-
-//        //其他加固
-//        XposedHelpers.findAndHookMethod("com.shell.SuperApplication", pkgClassLoader, "attachBaseContext", Context::class.java, object : XC_MethodHook() {
-//            @Throws(Throwable::class)
-//            override fun afterHookedMethod(param: MethodHookParam?) {
-//                super.afterHookedMethod(param)
-//                logD("发现壳啦")
-//            }
-//        })
-
-    //hook加固后的包，首先hook attachBaseContext这个方法来获取context对象
-    try {
-        hookFun("com.stub.StubApp", pkgClassLoader, "attachBaseContext", arrayOf(Context::class.java)) {
-            logD("发现壳啦")
-            //获取到的参数args[0]就是360的Context对象，通过这个对象来获取classloader
-            val context = it.args[0] as Context
-            //获取360的classloader，之后hook加固后的就使用这个classloader
-            val classLoader = context.classLoader
-            callback.invoke(classLoader)
-        }
-    } catch (e: Throwable) {
-        callback.invoke(pkgClassLoader)
-    }
-}
 
 fun fetchMyMethods(cls: Class<*>): List<Method> {
     val list = arrayListOf<Method>()
@@ -177,4 +65,58 @@ fun printFiled(field: Field, cls: Class<*>) {
     }
 }
 
-fun Any?.safeToString(): String = this?.toString()?:"null"
+fun Any?.safeToString(): String = this?.toString() ?: "null"
+
+operator fun Any.get(name: String): Any? = when (this) {
+    is Class<*> -> try {
+        getField(this, name)?.apply {
+            isAccessible = true
+        }?.get(null)
+    } catch (e: NoSuchFieldException) {
+        null
+    }
+    else -> try {
+        getField(this.javaClass, name)?.apply {
+            isAccessible = true
+        }?.get(this)
+    } catch (e: NoSuchFieldException) {
+        null
+    }
+}
+
+private fun getField(clazz: Class<*>, name: String): Field? = try {
+    clazz.getDeclaredField(name)
+} catch (e: NoSuchFieldException) {
+    clazz.superclass?.let {
+        getField(it, name)
+    }
+}
+
+fun String.newInstance(clsLoader: ClassLoader): Any {
+    return this.toClass(clsLoader).newInstance()
+}
+
+fun String.toClass(clsLoader: ClassLoader): Class<*> = XposedHelpers.findClass(this, clsLoader)
+
+
+fun Any?.call(methodName: String, vararg args: Any): Any? {
+    return XposedHelpers.callMethod(this, methodName, *args)
+}
+
+abstract class MethodHookCallback : XC_MethodHook() {
+    abstract fun before(param: MethodHookParam)
+
+    abstract fun after(param: MethodHookParam)
+
+    @Throws(Throwable::class)
+    override fun beforeHookedMethod(param: MethodHookParam) {
+        super.beforeHookedMethod(param)
+        before(param)
+    }
+
+    @Throws(Throwable::class)
+    override fun afterHookedMethod(param: MethodHookParam) {
+        super.afterHookedMethod(param)
+        after(param)
+    }
+}
