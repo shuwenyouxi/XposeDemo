@@ -116,8 +116,8 @@ class ModifyOkHttpRequestHook : BaseHook() {
 //                if (isPlaintext(contentType)) {
                 val bytes = IOUtils.toByteArray((copyResponseBody?.call("byteStream")) as InputStream)
                 val body = String(bytes, getCharset(contentType))
-                logV("contentType = ${contentType.safeToString()}}")
-                logV("responseBody = $body}")
+                logV("contentType = ${contentType.safeToString()}")
+                logV("responseBody = $body")
                 val responseBody = XposedHelpers.callStaticMethod("okhttp3.ResponseBody".toClass(clsLoader), "create", contentType, bytes)
                 param.result = param.result?.call("newBuilder")?.call("body", responseBody)?.call("build")
 //                } else {

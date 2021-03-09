@@ -14,6 +14,7 @@ class MainHookEntrance : IXposedHookLoadPackage {
     private val hookList = mutableListOf<IXposedHookLoadPackage>().apply {
 //        add(ChangeHybridUrlHook())
 //        add(ChangeGisHook())
+//        add(ModifyOkHttpRequestHook())
 //        add(PrintOkHttpHook())
         add(ModifyOkHttpRequestHook())
     }
