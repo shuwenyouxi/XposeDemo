@@ -1,9 +1,6 @@
 package com.dsw.xposeddemo
 
-import com.dsw.xposeddemo.hook.ChangeGisHook
-import com.dsw.xposeddemo.hook.ChangeHybridUrlHook
-import com.dsw.xposeddemo.hook.ModifyOkHttpRequestHook
-import com.dsw.xposeddemo.hook.PrintOkHttpHook
+import com.dsw.xposeddemo.hook.*
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
@@ -14,9 +11,9 @@ class MainHookEntrance : IXposedHookLoadPackage {
     private val hookList = mutableListOf<IXposedHookLoadPackage>().apply {
 //        add(ChangeHybridUrlHook())
 //        add(ChangeGisHook())
-//        add(ModifyOkHttpRequestHook())
 //        add(PrintOkHttpHook())
-        add(ModifyOkHttpRequestHook())
+//        add(ModifyOkHttpRequestHook())
+        add(PrintOkHttpByDynamicLoadDexHook())
     }
 
     @Throws(Throwable::class)

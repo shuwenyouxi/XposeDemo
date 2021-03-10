@@ -34,14 +34,16 @@ abstract class BaseHook : IXposedHookLoadPackage {
      * 正式进入前执行一些通用代码
      */
     private fun doBeforeEnter() {
-        hookFun(Application::class.java, "attach", Context::class.java, object : MethodHookCallback() {
-            override fun before(param: MethodHookParam) {
-            }
+        if (appContext == null) {
+            hookFun(Application::class.java, "attach", Context::class.java, object : MethodHookCallback() {
+                override fun before(param: MethodHookParam) {
+                }
 
-            override fun after(param: MethodHookParam) {
-                appContext = param.args[0] as? Context
-            }
-        })
+                override fun after(param: MethodHookParam) {
+                    appContext = param.args[0] as? Context
+                }
+            })
+        }
     }
 
     abstract fun enter()
@@ -58,6 +60,7 @@ abstract class BaseHook : IXposedHookLoadPackage {
                     logD("发现壳啦")
                     //获取到的参数args[0]就是360的Context对象，通过这个对象来获取classloader
                     val context = param.args[0] as Context
+                    appContext = context
                     //获取360的classloader，之后hook加固后的就使用这个classloader
                     callback.invoke(context.classLoader)
                 }

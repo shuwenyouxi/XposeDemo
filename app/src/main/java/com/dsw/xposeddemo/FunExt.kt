@@ -33,6 +33,10 @@ fun logE(t: Throwable) {
     Log.e("Xposed", "$logcatFilterKeyword ${Log.getStackTraceString(t)}")
 }
 
+fun logE(txt: String?) {
+    Log.e("Xposed", "$logcatFilterKeyword ${txt ?: ""}")
+}
+
 
 @JvmOverloads
 fun hookFun(clsName: String, clsLoader: ClassLoader, funName: String, vararg args: Any) {
