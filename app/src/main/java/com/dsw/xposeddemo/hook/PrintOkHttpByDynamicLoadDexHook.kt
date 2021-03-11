@@ -44,7 +44,7 @@ class PrintOkHttpByDynamicLoadDexHook : BaseHook() {
                 val builder = param.thisObject?:return
                 (builder["interceptors"] as? ArrayList<*>)?.takeIf { it.isNotEmpty() }?:return
                 val logging = httpLoggingInterceptorCls?.newInstance()?:return
-                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["BODY"]?:return
+                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["HEADERS"]?:return
                 logging.call("setLevel", levelBasic)
                 builder.call("addInterceptor", logging)
                 logD("大功告成")
