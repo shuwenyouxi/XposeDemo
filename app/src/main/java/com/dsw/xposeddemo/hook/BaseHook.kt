@@ -13,7 +13,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
  */
 abstract class BaseHook : IXposedHookLoadPackage {
 
-    abstract var dstPkgName: String
+    abstract var dstPkgNameList: Array<String>
 
     var appContext: Context? = null
 
@@ -21,7 +21,9 @@ abstract class BaseHook : IXposedHookLoadPackage {
 
     @Throws(Throwable::class)
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        if (lpparam.packageName != dstPkgName) return  //Hook的app包名过滤
+        if (!dstPkgNameList.contains(lpparam.packageName)) {
+            return  //Hook的app包名过滤
+        }
         logD("enter")
         considerFindRealClassLoader(lpparam.classLoader) { realClassLoader ->
             clsLoader = realClassLoader

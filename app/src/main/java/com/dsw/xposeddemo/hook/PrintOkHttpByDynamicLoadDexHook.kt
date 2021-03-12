@@ -1,8 +1,12 @@
 package com.dsw.xposeddemo.hook
 
+import androidx.appcompat.app.AppCompatActivity
 import com.dsw.xposeddemo.*
 import dalvik.system.DexClassLoader
+import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedHelpers
+import java.io.File
+import java.io.FileOutputStream
 import java.lang.reflect.Field
 import java.util.*
 
@@ -13,12 +17,23 @@ import java.util.*
  */
 class PrintOkHttpByDynamicLoadDexHook : BaseHook() {
 
-    override var dstPkgName = "com.anjuke.android.newbroker"
+    override var dstPkgNameList = arrayOf(
+            "com.lianjia.beike",
+//            "com.anjuke.android.app",
+//            "com.anjuke.android.newbroker",
+    )
 
     //http log dex路径
     private val dexPath = "/storage/emulated/0/Download/logging-interceptor-3.12.10-jar2dex.dex"
 
     private var httpLoggingInterceptorCls: Class<*>? = null
+
+
+    private val out by lazy {
+        val file = File(appContext!!.filesDir, "bg.txt")
+        FileOutputStream(file, true)
+    }
+
 
     private val dexClsLoader by lazy {
         // 定义DexClassLoader
@@ -33,18 +48,55 @@ class PrintOkHttpByDynamicLoadDexHook : BaseHook() {
 
     override fun enter() {
         considerLoadDex()
-        httpLoggingInterceptorCls?:run {
+        httpLoggingInterceptorCls ?: run {
             logD("失败")
             return
         }
 
+//        hookFun("okhttp3.logging.HttpLoggingInterceptor\$Logger", clsLoader, "log", String::class.java, object: MethodHookCallback() {
+//            override fun before(param: MethodHookParam) {
+//            }
+//
+//            override fun after(param: MethodHookParam) {
+//                logD("ssssssss")
+//            }
+//        })
 
-        hookFun("okhttp3.OkHttpClient.Builder", clsLoader, "build", object: MethodHookCallback() {
+
+//        val out = FileOutputStream(file, true)
+        XposedHelpers.getStaticObjectField("okhttp3.logging.HttpLoggingInterceptor.Logger".toClass(clsLoader), "DEFAULT")?.also {
+            val loggerClsName = it::class.java.name
+            hookFun(loggerClsName, clsLoader, "log", String::class.java, object : MethodHookCallback() {
+                override fun before(param: MethodHookParam) {
+                }
+
+                override fun after(param: MethodHookParam) {
+                    val txt = param.args[0].safeToString()
+                    if (txt.startsWith("{") && txt.endsWith("}")) {
+                        processLog(txt) { partTxt ->
+                            logI(partTxt)
+                        }
+                    } else {
+                        processLog(txt) { partTxt ->
+                            logD(partTxt)
+                        }
+                    }
+
+//                    if (txt.startsWith("{") && txt.endsWith("}")) {
+//                        logD(txt)
+//                        write(txt)
+//                    }
+                }
+            })
+        }
+
+        hookFun("okhttp3.OkHttpClient.Builder", clsLoader, "build", object : MethodHookCallback() {
             override fun before(param: MethodHookParam) {
-                val builder = param.thisObject?:return
-                (builder["interceptors"] as? ArrayList<*>)?.takeIf { it.isNotEmpty() }?:return
-                val logging = httpLoggingInterceptorCls?.newInstance()?:return
-                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["HEADERS"]?:return
+                val builder = param.thisObject ?: return
+                (builder["interceptors"] as? ArrayList<*>)?.takeIf { it.isNotEmpty() } ?: return
+                val logging = httpLoggingInterceptorCls?.newInstance() ?: return
+                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["HEADERS"]?: return
+//                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["BODY"]?: return
                 logging.call("setLevel", levelBasic)
                 builder.call("addInterceptor", logging)
                 logD("大功告成")
@@ -58,9 +110,10 @@ class PrintOkHttpByDynamicLoadDexHook : BaseHook() {
         XposedHelpers.findAndHookConstructor("okhttp3.OkHttpClient", clsLoader, "okhttp3.OkHttpClient.Builder", object : MethodHookCallback() {
             override fun before(param: MethodHookParam) {
                 val builder = param.args?.getOrNull(0) ?: return
-                (builder["interceptors"] as? ArrayList<*>)?.takeIf { it.isNotEmpty() }?:return
-                val logging = httpLoggingInterceptorCls?.newInstance()?:return
-                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["BASIC"]?:return
+                (builder["interceptors"] as? ArrayList<*>)?.takeIf { it.isNotEmpty() } ?: return
+                val logging = httpLoggingInterceptorCls?.newInstance() ?: return
+                val levelBasic = "okhttp3.logging.HttpLoggingInterceptor\$Level".toClass(clsLoader)["BASIC"]
+                        ?: return
                 logging.call("setLevel", levelBasic)
                 builder.call("addInterceptor", logging)
                 logD("大功告成")
@@ -70,6 +123,22 @@ class PrintOkHttpByDynamicLoadDexHook : BaseHook() {
 
             }
         })
+    }
+
+    @Synchronized
+    private fun write(txt: String) {
+        XSharedPreferences("com.dsw.xposeddemo", "daishuwen")
+        if (!appContext!!.getSharedPreferences("daishuwen", AppCompatActivity.MODE_MULTI_PROCESS).getBoolean("record", true)) {
+//        if (!XSharedPreferences("daishuwen").getBoolean("record", true)) {
+            return
+        }
+        logD("sss 开始")
+//        val file = File(appContext!!.filesDir, "bg.txt")
+//        val out = FileOutputStream(file, true)
+        out.write(txt.toByteArray())
+        out.write("\n\n".toByteArray())
+//        out.close()
+        logD("sss 结束")
     }
 
     /**
@@ -242,5 +311,12 @@ class PrintOkHttpByDynamicLoadDexHook : BaseHook() {
             e.printStackTrace()
         }
         return false
+    }
+
+    private fun processLog(fullTxt: String, realLogAction: (part: String)-> Unit) {
+        val delta = fullTxt.length / 2000 + 1
+        for (i in 0 until delta) {
+            realLogAction.invoke(fullTxt.substring(i * 2000, Math.min((i+1)*2000, fullTxt.length)))
+        }
     }
 }

@@ -13,7 +13,8 @@ class MainHookEntrance : IXposedHookLoadPackage {
 //        add(ChangeGisHook())
 //        add(PrintOkHttpHook())
 //        add(ModifyOkHttpRequestHook())
-        add(PrintOkHttpByDynamicLoadDexHook())
+        add(PrintCurlHook())
+//        add(PrintOkHttpByDynamicLoadDexHook())
     }
 
     @Throws(Throwable::class)

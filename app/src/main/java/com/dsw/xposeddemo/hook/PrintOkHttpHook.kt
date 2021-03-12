@@ -12,7 +12,11 @@ import java.nio.charset.Charset
  */
 class PrintOkHttpHook : BaseHook() {
 
-    override var dstPkgName = "com.anjuke.android.newbroker"
+    override var dstPkgNameList = arrayOf(
+            "com.lianjia.beike",
+//            "com.anjuke.android.app",
+//            "com.anjuke.android.newbroker",
+    )
 
     private val UTF8 = Charset.forName("UTF-8")
 
@@ -24,7 +28,10 @@ class PrintOkHttpHook : BaseHook() {
 
             override fun after(param: MethodHookParam) {
                 //request
-                val copyRequest = param.args?.get(0)?.call("request")?.call("newBuilder")?.call("build")
+                val rqBuilder = param.args?.get(0)?.call("request")?.call("newBuilder")
+                rqBuilder.call("removeHeader", "Accept-Encoding")
+                val copyRequest = rqBuilder?.call("build")
+//                val copyRequest = param.args?.get(0)?.call("request")?.call("newBuilder")?.call("build")
                 val headers = copyRequest?.call("headers")
                 val requestBody = copyRequest?.call("body")
                 //response
@@ -59,6 +66,9 @@ class PrintOkHttpHook : BaseHook() {
 //                } else {
 //                    logV("\tbody: maybe [binary body], omitted!");
 //                }
+
+
+
                 logI("================================ End ================================")
             }
         })

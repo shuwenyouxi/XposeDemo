@@ -16,7 +16,7 @@ import kotlin.collections.HashSet
  */
 class ModifyOkHttpRequestHook : BaseHook() {
 
-    override var dstPkgName = "com.anjuke.android.newbroker"
+    override var dstPkgNameList = arrayOf("com.anjuke.android.newbroker")
 
     private val UTF8 = Charset.forName("UTF-8")
 

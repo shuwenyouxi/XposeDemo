@@ -10,7 +10,7 @@ import com.dsw.xposeddemo.hookFun
  */
 class ChangeHybridUrlHook : BaseHook() {
 
-    override var dstPkgName = "com.anjuke.android.app"
+    override var dstPkgNameList = arrayOf("com.anjuke.android.app")
 
     override fun enter() {
         hookFun("com.anjuke.android.app.mainmodule.hybrid.HybridActivity", clsLoader, "onCreate", Bundle::class.java, object : MethodHookCallback() {

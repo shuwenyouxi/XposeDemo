@@ -11,7 +11,7 @@ import kotlin.math.abs
  */
 class ChangeGisHook : BaseHook() {
 
-    override var dstPkgName = "com.anjuke.android.newbroker"
+    override var dstPkgNameList = arrayOf("com.anjuke.android.newbroker")
 
     private val dstLongitude = 114.032524   //期望经度
     private val dstLatitude = 22.650382     //期望维度

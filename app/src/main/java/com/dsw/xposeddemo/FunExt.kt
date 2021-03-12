@@ -69,7 +69,7 @@ fun printFiled(field: Field, cls: Class<*>) {
     }
 }
 
-fun Any?.safeToString(): String = this?.toString() ?: "null"
+fun Any?.safeToString(): String = this?.toString() ?: ""
 
 operator fun Any.get(name: String): Any? = when (this) {
     is Class<*> -> try {
